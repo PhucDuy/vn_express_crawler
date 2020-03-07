@@ -1,7 +1,7 @@
 
 from flask import Flask, render_template, request, redirect
 
-from scripts.web_scraper import crawl_from_url
+from scripts.web_scraper import scrape_from_url
 from flask_wtf.csrf import CSRFProtect
 from flask_wtf import FlaskForm
 from wtforms import StringField
@@ -28,7 +28,7 @@ def index():
 def search_products(form):
     if form.validate_on_submit():
         print(form.url)
-        data = crawl_from_url(form.url.data)
+        data = scrape_from_url(form.url.data)
         return render_template(home_url, form=form, data=data)
     return render_template(home_url, form=form)
 
