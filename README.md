@@ -4,3 +4,11 @@ It's a demo in CoderSchool class. I make it for learning about collecting data i
 # Features
 - Scrape all product in tiki link which is provided by user.
 - Support scrape multiple pages
+
+# Getting started
+```shell
+git clone 'github-link'
+cd 'CLONED FOLDER'
+pip install -r requirements.txt
+python3 app.py
+```
