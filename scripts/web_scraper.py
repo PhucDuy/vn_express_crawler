@@ -57,7 +57,7 @@ def get_pages(soup, url):
             elif page['class'][0] == 'next':
               data['idx'] = 'Next'
             elif page['class'][0] == 'prev':
-              data['idx'] = 'Previos'
+              data['idx'] = 'Previous'
 
             if page.name == 'span':
                 data['active'] = "enable"
