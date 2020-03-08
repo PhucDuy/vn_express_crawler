@@ -1,76 +1,72 @@
-{% extends 'base.html' %}
-{% block content %}
-<section class="url-input" style="padding: 20px 0px;">
-  <div class="container">
-      <form class="row"method="POST" action="/products">
-      {{ form.hidden_tag() }}
-      {{ form.csrf_token }}
-      <div class="col-md-10 float-left">
-        {{ form.url(class_="form-control") }}
-      </div>
-      <div class="col-md-2 float-right">
-        <input class="w-100 btn btn-outline-success" type="submit" value="Scrape it!">
-      </div>
-    </form>  
-    
-  </div>
-</section>
-
-{% if data is defined %}
-<section class="crawl-data">
-  <div class="container">
-    {% if pages is defined %}
-    <nav aria-label="Page navigation">
-      <ul class="pagination justify-content-end">
-      {% for page in pages %}
-        {% if page['active'] == 'enable' %}
-          <li class="page-item active">
-              <form action="{{ url_for('products',url=page['link'])}}" method="POST">
-                {{ form.hidden_tag() }}
-                {{ form.csrf_token }}
-              <input class="page-link" type="submit" value="{{page['idx']}}">
-              <span class="sr-only">(current)</span>
-            </form>
-          </li>
-        {% else %}
-          <li class="page-item">
-              <form action="{{ url_for('products',url=page['link'])}}" method="POST">
-                {{ form.hidden_tag() }}
-                {{ form.csrf_token }}
-              <input class="page-link" type="submit" value="{{page['idx']}}">
-            </form>
-          </li>
-        {% endif %}
-      {% endfor %}
-      </ul>
-    </nav>
-
-    {% endif %}
-
-    <div class="table-responsive-sm">
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            {% for col in data.columns %}
-            <th scope="col">{{col}}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for index,row in data.iterrows() %}
-          <tr>
-            <th scope="row">{{index}}</th>
-            <td>{{row['product_id']}}</td>
-            <td>{{row['seller_id']}}</td>
-            <td>{{row['title']}}</td>
-            <td>{{row['price']}}</td>
-            <td> <img src="{{row['image_url']}}" class="img-fluid" width=100 height=100 alt=""></td>
-            {% endfor %}
-      </table>
+{% extends 'base.html' %} {% block content %}
+<nav class="navbar navbar-light bg-light justify-content-between mb-4">
+    <a href="/"> TIKI </a>
+    <div class="container w-100">
+        <form class="row  w-100" method="POST" action="/products">
+            {{ form.hidden_tag() }} {{ form.csrf_token }}
+            <div class="col-md-10 float-left">
+                {{ form.url(class_="form-control") }}
+            </div>
+            <div class="col-md-2">
+                <input class="w-100 btn btn-outline-success" type="submit" value="Scrape it!">
+            </div>
+        </form>
 
     </div>
-  </div>
+    <img class="float-right img-fluid" src="{{ url_for('static', filename='img/logo.png')}}" width="30" height="30" alt=Tiki Logo>
+</nav>
+
+
+{% if data is not none %}
+<section class="crawl-data">
+    <div class="container">
+        {% if pages is not none %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-end">
+                {% for page in pages %} {% if page['active'] == 'enable' %}
+                <li class="page-item active">
+                    <form action="{{ url_for('products',url=page['link'])}}" method="POST">
+                        {{ form.hidden_tag() }} {{ form.csrf_token }}
+                        <input class="page-link" type="submit" value="{{page['idx']}}">
+                        <span class="sr-only">(current)</span>
+                    </form>
+                </li>
+                {% else %}
+                <li class="page-item">
+                    <form action="{{ url_for('products',url=page['link'])}}" method="POST">
+                        {{ form.hidden_tag() }} {{ form.csrf_token }}
+                        <input class="page-link" type="submit" value="{{page['idx']}}">
+                    </form>
+                </li>
+                {% endif %} {% endfor %}
+            </ul>
+        </nav>
+
+        {% endif %}
+
+        <div class="table-responsive-sm">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        {% for col in data.columns %}
+                        <th scope="col">{{col}}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for index,row in data.iterrows() %}
+                    <tr>
+                        <th scope="row">{{index}}</th>
+                        <td>{{row['product_id']}}</td>
+                        <td>{{row['seller_id']}}</td>
+                        <td>{{row['title']}}</td>
+                        <td>{{row['price']}}</td>
+                        <td> <img src="{{row['image_url']}}" class="img-fluid" width=100 height=100 alt=""></td>
+                        {% endfor %}
+            </table>
+
+        </div>
+    </div>
 </section>
-{% endif %}
-{% endblock %}
+{% endif %} {% endblock %}
