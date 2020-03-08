@@ -45,20 +45,18 @@ def get_prev_page_url(soup, url):
 
 
 def get_pages(soup, url):
-    page_links = soup.find(
-        'div', class_='list-pager').ul.find_all(['span', 'a'])
-    link = re.search(link_regex, url).group()
-    pages = []
-    for page in page_links:
-        try:
+    try:
+        page_links = soup.find('div', class_='list-pager').ul.find_all(['span', 'a'])
+        link = re.search(link_regex, url).group()
+        pages = []
+        for page in page_links:
             data = {}
             if page.string is not None:
                 data['idx'] = page.string
             elif page['class'][0] == 'next':
-              data['idx'] = 'Next'
+                data['idx'] = 'Next'
             elif page['class'][0] == 'prev':
-              data['idx'] = 'Previous'
-
+                data['idx'] = 'Previous'
             if page.name == 'span':
                 data['active'] = "enable"
                 data['link'] = url
@@ -67,9 +65,9 @@ def get_pages(soup, url):
                 data['link'] = link+page['href']
 
             pages.append(data)
-        except:
-            pass
-    return pages
+        return pages
+    except:
+        return None
 
 
 def get_product_from_soup(soup):
@@ -99,6 +97,7 @@ def get_product_from_soup(soup):
 
 link_regex = r"(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9]*)?"
 parser = 'html.parser'
+
 
 def scrape_from_url(url):
     response = get_url(url)
