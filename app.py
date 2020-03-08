@@ -16,7 +16,7 @@ app.config['SECRET_KEY'] = 'a_secret_key. You may change it later'
 
 class UrlForm(FlaskForm):
     url = StringField('url', validators=[DataRequired()], render_kw={
-                      "placeholder": "Please input the link for details!"})
+                      "placeholder": "Search tiki products or type a tiki url!"})
 
 
 @app.route('/home', methods=['GET', 'POST'])
