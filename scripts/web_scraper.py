@@ -19,29 +19,57 @@ URL of the product image
 
 
 def get_next_page_url(soup, url):
-    if soup == None:
+    if soup is None:
         return None
-    if url == None:
+    if url is None:
         return None
     page_links = soup.find(
         'div', class_='list-pager').ul.find('a', class_="next")
-    if page_links != None:
+    if page_links is not None:
         return url + page_links['href']
     else:
         return None
 
 
 def get_prev_page_url(soup, url):
-    if soup == None:
+    if soup is None:
         return None
-    if url == None:
+    if url is None:
         return None
     page_links = soup.find(
         'div', class_='list-pager').ul.find('a', class_="prev")
-    if page_links != None:
+    if page_links is not None:
         return url + page_links['href']
     else:
         return None
+
+
+def get_pages(soup, url):
+    page_links = soup.find(
+        'div', class_='list-pager').ul.find_all(['span', 'a'])
+    link = re.search(link_regex, url).group()
+    pages = []
+    for page in page_links:
+        try:
+            data = {}
+            if page.string is not None:
+                data['idx'] = page.string
+            elif page['class'][0] == 'next':
+              data['idx'] = 'Next'
+            elif page['class'][0] == 'prev':
+              data['idx'] = 'Previos'
+
+            if page.name == 'span':
+                data['active'] = "enable"
+                data['link'] = url
+            else:
+                data['active'] = ""
+                data['link'] = link+page['href']
+
+            pages.append(data)
+        except:
+            pass
+    return pages
 
 
 def get_product_from_soup(soup):
@@ -69,21 +97,34 @@ def get_product_from_soup(soup):
     return product_df
 
 
+link_regex = r"(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9]*)?"
+parser = 'html.parser'
+
 def scrape_from_url(url):
+    response = get_url(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, parser)
+        pages = get_pages(soup, url)
+        df = get_product_from_soup(soup)
+        return (df, pages)
+    else:
+        return None
+
+
+def scrape_all_from_url(url):
     response = get_url(url)
 
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
+        soup = BeautifulSoup(response.text, parser)
 
-        link = re.search(
-            r"(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9]*)?", url).group()
+        link = re.search(link_regex, url).group()
         df = get_product_from_soup(soup)
         list_page_df = [df]
 
         prev_page = get_prev_page_url(soup, url)
         next_page = get_next_page_url(soup, url)
 
-        while (prev_page != None):
+        while (prev_page is not None):
             print(f"prev page: {prev_page}")
             response = get_url(prev_page)
             if response.status_code == 200:
@@ -93,11 +134,11 @@ def scrape_from_url(url):
             else:
                 prev_page = None
 
-        while (next_page != None):
+        while (next_page is not None):
             print(f"next page: {next_page}")
             response = get_url(next_page)
             if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
+                soup = BeautifulSoup(response.text, parser)
                 list_page_df.append(get_product_from_soup(soup))
                 next_page = get_next_page_url(soup, link)
             else:
@@ -108,3 +149,6 @@ def scrape_from_url(url):
     else:
         return None
 
+
+scrape_from_url(
+    'https://tiki.vn/dien-tu-dien-lanh/c4221?src=c.4221.hamburger_menu_fly_out_banner')
