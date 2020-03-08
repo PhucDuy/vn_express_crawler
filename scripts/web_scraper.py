@@ -96,10 +96,14 @@ def get_product_from_soup(soup):
 
 
 link_regex = r"(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9]*)?"
+web_detector_regex = r"((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)"
+tiki_search_path="https://tiki.vn/search?q="
 parser = 'html.parser'
 
 
 def scrape_from_url(url):
+    if not bool(re.match(web_detector_regex,url)):
+        url = tiki_search_path+url
     response = get_url(url)
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, parser)
