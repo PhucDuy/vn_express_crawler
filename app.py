@@ -33,6 +33,9 @@ def search_products(form):
         return render_template(home_url, form=form, data=df, pages=pages)
     return render_template(home_url, form=form)
 
+@app.route('/home', methods=('GET','POST'))
+def home():
+    return render_template('home.html')
 
 @app.route('/load_new_page/', methods=['POST'])
 def load_new_page():
