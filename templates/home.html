@@ -1,40 +1,18 @@
-{% extends "base.html" %}
-{% block content %}
-    <head>
-  <title>Bootstrap 4 Website Example</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
-  <style>
-  .fakeimg {
-    height: 200px;
-    background: #aaa;
-  
-  </style>
-</head>
-<body>
-
-<nav class="navbar navbar-light bg-light justify-content-between">  
-   <a href="https://tiki.vn" > TIKI </a>
-     <img class="float-right img-fluid" src="C:\Workplace\tiki_scraper\logo.png" width="30" height="30"   alt= Tiki Logo>
+{% extends 'base.html' %} {% block content %}
+<nav class="navbar navbar-light bg-light justify-content-between">
+    <a href="https://tiki.vn"> TIKI </a>
+    <img class="float-right img-fluid" src="{{ url_for('static', filename='img/logo.png')}}" width="30" height="30" alt=Tiki Logo>
 </nav>
- 
-</nav>
-  <div class="jumbotron jumbotron-fluid" style="padding: 160px">
-  <div class="container-fluid">
-    <h1 class="display-4" style="text-align: center; color:blue" >TIKI Scraper</h1>
-    <p class="lead" style="text-align: center"></p>
-  </div>
 
-   <form class="container-fluid row">
-   
-    <p class="col-sm-3"></p>
-    <input class="col-sm-5 form-control mr-sm-2" type="search" placeholder="Please input the link for details!" aria-label="Search">
-    <button class="col-sm- 1 btn btn-outline-success my-2 my-sm-0 " type="submit">Search</button>
-    <p class="col-sm-3"></p>
-  </form>
-
-{% endblock  %}
+<div class="container h-100">
+    <div class="row h-100 justify-content-center align-items-center">
+        <div class="col-md-12">
+            <h1 class="display-4 text-center" style="color:blue">TIKI Scraper</h1>
+            <form class="row" method="POST" action="/">
+                {{ form.hidden_tag() }} {{ form.csrf_token }} {{ form.url(class_="mr-sm-1 col-sm-9 text-center form-control") }}
+                <input class="col-sm-2 text-center btn btn-outline-success" type="submit" value="Scrape it!">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
