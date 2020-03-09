@@ -3,7 +3,9 @@ It's a demo in CoderSchool class. I make it for learning about collecting data i
 
 # Features
 - Scrape all product in tiki link which is provided by user.
+- Support scrape by keyword and url
 - Support scrape multiple pages
+  
 
 # Getting started
 ```shell
