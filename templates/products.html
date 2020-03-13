@@ -25,15 +25,16 @@
             <ul class="pagination justify-content-end">
                 {% for page in pages %} {% if page['active'] == 'enable' %}
                 <li class="page-item active">
-                    <form action="{{ url_for('products',url=page['link'])}}" method="POST">
+                    <form action="{{ url_for('products',page_url=page['link'])}}" method="POST">
                         {{ form.hidden_tag() }} {{ form.csrf_token }}
                         <input class="page-link" type="submit" value="{{page['idx']}}">
+                        <input type="hidden" name="name" value="{{page['link']}}">
                         <span class="sr-only">(current)</span>
                     </form>
                 </li>
                 {% else %}
                 <li class="page-item">
-                    <form action="{{ url_for('products',url=page['link'])}}" method="POST">
+                    <form action="{{ url_for('products',page_url=page['link'])}}" method="GET">
                         {{ form.hidden_tag() }} {{ form.csrf_token }}
                         <input class="page-link" type="submit" value="{{page['idx']}}">
                     </form>
