@@ -3,6 +3,9 @@ import requests
 import pandas as pd
 import re
 
+from scripts.models import category
+from scripts.models import product
+
 
 def get_url(url):
     source = requests.get(url)
