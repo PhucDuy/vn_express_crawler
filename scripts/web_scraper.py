@@ -2,14 +2,24 @@ from bs4 import BeautifulSoup
 import requests
 import pandas as pd
 import re
+import time 
 
-from scripts.models import category
-from scripts.models import product
+# from models import category
+# from models import product
+from collections import deque
 
 
 def get_url(url):
-    source = requests.get(url)
-    return source
+    time.sleep(1)
+    print("GET URL: "+url)
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, parser)
+            return soup
+    except Exception as err:
+        print('ERROR BY REQUEST:', err)
+    return None
 
 
 """
@@ -19,6 +29,8 @@ Product title : data-title
 Price = data-price
 URL of the product image
 """
+
+BASE_URL = "https://tiki.com"
 
 
 def get_next_page_url(soup, url):
@@ -39,6 +51,7 @@ def get_prev_page_url(soup, url):
         return None
     if url is None:
         return None
+
     page_links = soup.find(
         'div', class_='list-pager').ul.find('a', class_="prev")
     if page_links is not None:
@@ -49,7 +62,8 @@ def get_prev_page_url(soup, url):
 
 def get_pages(soup, url):
     try:
-        page_links = soup.find('div', class_='list-pager').ul.find_all(['span', 'a'])
+        page_links = soup.find(
+            'div', class_='list-pager').ul.find_all(['span', 'a'])
         link = re.search(link_regex, url).group()
         pages = []
         for page in page_links:
@@ -100,16 +114,16 @@ def get_product_from_soup(soup):
 
 link_regex = r"(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9]*)?"
 web_detector_regex = r"((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)"
-tiki_search_path="https://tiki.vn/search?q="
+tiki_search_path = "https://tiki.vn/search?q="
 parser = 'html.parser'
 
 
 def scrape_from_url(url):
-    if not bool(re.match(web_detector_regex,url)):
+    if not bool(re.match(web_detector_regex, url)):
         url = tiki_search_path+url
-    response = get_url(url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, parser)
+    soup = get_url(url)
+
+    if soup is not None:
         pages = get_pages(soup, url)
         df = get_product_from_soup(soup)
         return (df, pages)
@@ -117,38 +131,34 @@ def scrape_from_url(url):
         return None
 
 
+def scrape_prev_next_from_url(url, func):
+    list_page_df = []
+    de = deque([url])
+    while de:
+        cur_url = de.popleft()
+        if cur_url is None:
+            break
+        soup = get_url(cur_url)
+        if soup is not None:
+            list_page_df.append(get_product_from_soup(soup))
+            new_page = func(soup, BASE_URL)
+            if new_page is not None:
+                de.extend([new_page])
+    return list_page_df
+
+
 def scrape_all_from_url(url):
-    response = get_url(url)
+    soup = get_url(url)
 
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, parser)
-
-        link = re.search(link_regex, url).group()
+    if soup is not None:
         df = get_product_from_soup(soup)
         list_page_df = [df]
 
         prev_page = get_prev_page_url(soup, url)
         next_page = get_next_page_url(soup, url)
-
-        while (prev_page is not None):
-            print(f"prev page: {prev_page}")
-            response = get_url(prev_page)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                list_page_df.append(get_product_from_soup(soup))
-                prev_page = get_prev_page_url(soup, link)
-            else:
-                prev_page = None
-
-        while (next_page is not None):
-            print(f"next page: {next_page}")
-            response = get_url(next_page)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, parser)
-                list_page_df.append(get_product_from_soup(soup))
-                next_page = get_next_page_url(soup, link)
-            else:
-                next_page = None
+        # Get all previos page
+        list_page_df.extend(scrape_prev_next_from_url(prev_page, get_prev_page_url))
+        list_page_df.extend(scrape_prev_next_from_url(next_page, get_next_page_url))
 
         products_df = pd.concat(list_page_df, ignore_index=True)
         return products_df
@@ -156,5 +166,5 @@ def scrape_all_from_url(url):
         return None
 
 
-scrape_from_url(
-    'https://tiki.vn/dien-tu-dien-lanh/c4221?src=c.4221.hamburger_menu_fly_out_banner')
+scrape_all_from_url(
+    "https://tiki.vn/pc-may-tinh-bo/c8093?src=c.1846.hamburger_menu_fly_out_banner")
