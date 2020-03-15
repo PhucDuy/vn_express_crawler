@@ -177,7 +177,7 @@ class WebScrapper():
             if save_db:
               try:
                 category.is_scraped = True;
-                self.session.commit()
+                db.session.commit()
               except Exception as err:
                 print(f"Error: {err}")
 
@@ -185,26 +185,27 @@ class WebScrapper():
 
     def save_product(self,product_map,category):
         try:
-            existed_product = self.session.query(Product).filter_by(url=product_map['url']).first()
-            l_cat = self.session.merge(category)
+            session = scoped_session(sessionmaker(autocommit=False,
+                                         autoflush=False,
+                                         bind=db.engine))
+            existed_product = session.query(Product).filter_by(url=product_map['url']).first()
+            l_cat = session.merge(category)
             if existed_product is not None:
-                l_existed_product =  self.session.merge(existed_product)
-                l_existed_product.cat_ids.append(l_cat)
-                self.session.commit()
+
+                existed_product.cat_ids.append(l_cat)
+                session.commit()
             else:    
-                photo = Photo(url=product_map["image_url"])
-                p = Product(product_id=product_map['product_id'],
+                photo = session.merge(Photo(url=product_map["image_url"]))
+                p = session.merge(Product(product_id=product_map['product_id'],
                                         seller_id=product_map['seller_id'],
                                         title=product_map['title'], price=product_map['price'],
-                                        url=product_map['url'])
-                l_photo = self.session.merge(photo)
-                l_p = self.session.merge(p)
-                l_p.cat_ids.append(l_cat)
-                l_p.image_urls.append(l_photo)
-                self.session.add(l_photo)
-                self.session.add(l_p)
-                self.session.commit()
-
+                                        url=product_map['url']))
+                p.cat_ids.append(l_cat)
+                p.image_urls.append(photo)
+                
+                session.add_all([p,photo])
+                session.commit()
+            session.remove()
         except Exception as err:
             print(f"ERROR BY SAVE PRODUCT: {err}")
 
@@ -283,16 +284,12 @@ class WebScrapper():
         main_category = self.get_main_categories(save_db)
         self.get_all_categories(main_category,save_db)
 
-    session = flask_scoped_session(db.session)
     def get_all_product_from_tiki(self, save_db=False):
         proxies = self.get_proxies()
         self.proxy_pool = cycle(proxies)
         leaf_categories = category.Category.query.filter_by(is_leaf_cat=False,is_scraped=False).all()
         pool = ThreadPool(5)
-        pool.starmap(self.get_all_products_from_category,zip(leaf_categories,[save_db] * len(leaf_categories)))
-        pool.close()
-        pool.join()
-        
+        pool.starmap(self.get_all_products_from_category,zip(leaf_categories,[save_db] * len(leaf_categories)))        
 
 
 
