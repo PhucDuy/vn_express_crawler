@@ -6,8 +6,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField
 from wtforms.validators import DataRequired
 import datetime,time,requests
-from flask_migrate import Migrate
 import click
+from flask.cli import with_appcontext
 
 
 app = Flask(__name__)
@@ -15,7 +15,7 @@ app.config['SECRET_KEY'] = 'a_secret_key. You may change it later'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tiki.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
+
 
 
 from scripts import web_scraper as web_scrapper
@@ -32,18 +32,27 @@ def home():
     form.url.data = "https://tiki.com"
     return render_template('home.html', form=form)
 
-
+@app.cli.command("get_proxies")
+def get_proxies():
+    click.echo("get_proxies")
+    web_scrapper.WebScrapper().get_proxies()
 @app.cli.command("init_db")
 def init_db():
     click.echo("init_db")
     db.drop_all()
     db.create_all()
-    
-@app.cli.command("load_from_tiki")
+
+@app.cli.command("load_product_from_tiki")
+@with_appcontext
+def load_product_from_tiki():
+    click.echo("load_product_from_tiki")
+    web_scrapper.WebScrapper().get_all_product_from_tiki(save_db=True)
+
+@app.cli.command("load_category_from_tiki")
 def load_from_tiki():
     click.echo("load_from_tiki")
     db.session.commit()
-    web_scrapper.WebScrapper().scrape_tiki_website(save_db=True)
+    web_scrapper.WebScrapper().scrape_tiki_website(app,save_db=True)
 
 
 @app.route('/products', methods=('POST', 'GET'))
