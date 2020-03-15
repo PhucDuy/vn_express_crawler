@@ -1,12 +1,16 @@
-class Category():
-    def __init__(self, id, cat_id, name, url, parent_id):
-        self.id = id
-        self.cat_id = cat_id
-        self.name = name
-        self.url = url
-        self.parent_id = parent_id
+from app import db
+from datetime import datetime
+from scripts.models.product import products_categories
+
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    url = db.Column(db.String(255), unique=True, nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey(
+        'category.id'), nullable=True)
+    is_leaf_cat = db.Column(db.Boolean, nullable=False, default=False)
+    is_scraped = db.Column(db.Boolean, nullable=False, default=False)
+    # products = db.relationship("Product",secondary="products_categories")
 
     def __repr__(self):
-        return "ID: {}, Name: {}, URL: {}, Parent_id: {}".format(self.cat_id, self.name, self.url, self.parent_id)
-
-    
+        return "ID: {}, Name: {}, URL: {}, Parent_id: {}".format(self.id, self.name, self.url, self.parent_id)
