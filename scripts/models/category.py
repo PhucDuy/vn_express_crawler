@@ -10,7 +10,6 @@ class Category(db.Model):
         'category.id'), nullable=True)
     is_leaf_cat = db.Column(db.Boolean, nullable=False, default=False)
     is_scraped = db.Column(db.Boolean, nullable=False, default=False)
-    # products = db.relationship("Product",secondary="products_categories")
 
     def __repr__(self):
         return "ID: {}, Name: {}, URL: {}, Parent_id: {}".format(self.id, self.name, self.url, self.parent_id)

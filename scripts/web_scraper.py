@@ -4,15 +4,18 @@ import pandas as pd
 import re
 import time
 from app import db
+import app
 from scripts.models import category
 from scripts.models.product import Product,Photo
-
 from collections import deque
 from lxml.html import fromstring
 from itertools import cycle
-import traceback
 
-from multiprocessing import Pool
+
+from multiprocessing.pool import ThreadPool
+from sqlalchemy.orm import scoped_session
+from sqlalchemy.orm import sessionmaker
+from flask_sqlalchemy_session import flask_scoped_session
 
 
 
@@ -21,17 +24,26 @@ class WebScrapper():
     link_regex = r"(http|ftp|https)://([\w+?\.\w+])+([a-zA-Z0-9]*)?"
     web_detector_regex = r"(([--:\w?@%&+~#=]*\.[a-z]{2,4})?(\/[A-Za-z0-9-]+\/\w+))"
     tiki_search_path = "https://tiki.vn/search?q="
-    parser = 'html.parser'
+    parser = 'lxml'
     BASE_URL = "https://tiki.vn"
   
 
-    
-    def get_url(self, url):
-        time.sleep(1)
-        print("GET URL: "+url)
+    def get_proxies(self):
+      return ["138.68.41.90:3128","142.93.57.37:80","80.187.140.26:8080"
+              "200.89.178.213:8080","41.190.33.162:8080","144.217.118.206:8080",
+              "138.68.41.90:8080","198.199.120.102:8080""192.241.245.207:8080",
+              "138.197.157.45:8080","138.197.157.32:8080","138.68.165.154:8080",
+              "188.226.141.61:8080","95.85.36.236:8080","188.226.141.211:8080",
+              "200.89.159.240:80","173.212.202.65:80","138.68.24.145:8080"]
 
+
+
+    def get_url(self, url, delay = 1):
+        print("GET URL: "+url)
+        time.sleep(delay)
+        proxy = "http://"+ next(self.proxy_pool)
         try:
-            response = requests.get(url,timeout=20)
+            response = requests.get(url,proxies={"http": proxy} if proxy is not None else None,timeout=30)
 
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, self.parser)
@@ -162,25 +174,37 @@ class WebScrapper():
             if next_page is not None:
                 self.get_products_in_prev_and_next_page_from_url(category,
                     next_page, self.get_page_url, "next",save_db)
+            if save_db:
+              try:
+                category.is_scraped = True;
+                self.session.commit()
+              except Exception as err:
+                print(f"Error: {err}")
+
 
 
     def save_product(self,product_map,category):
         try:
-            existed_product = Product.query.filter_by(url=product_map['url']).first()
+            existed_product = self.session.query(Product).filter_by(url=product_map['url']).first()
+            l_cat = self.session.merge(category)
             if existed_product is not None:
-                existed_product.cat_ids.append(category)
-                db.session.commit()
+                l_existed_product =  self.session.merge(existed_product)
+                l_existed_product.cat_ids.append(l_cat)
+                self.session.commit()
             else:    
                 photo = Photo(url=product_map["image_url"])
                 p = Product(product_id=product_map['product_id'],
                                         seller_id=product_map['seller_id'],
                                         title=product_map['title'], price=product_map['price'],
                                         url=product_map['url'])
-                p.cat_ids.append(category)
-                p.image_urls.append(photo)
-                db.session.add_all([photo,p])
-                db.session.commit()
-        
+                l_photo = self.session.merge(photo)
+                l_p = self.session.merge(p)
+                l_p.cat_ids.append(l_cat)
+                l_p.image_urls.append(l_photo)
+                self.session.add(l_photo)
+                self.session.add(l_p)
+                self.session.commit()
+
         except Exception as err:
             print(f"ERROR BY SAVE PRODUCT: {err}")
 
@@ -230,16 +254,17 @@ class WebScrapper():
         return result
 
     def get_all_categories(self, main_categories, save_db=False):
-        de = deque(main_categories[:1])
+      
+        de = deque(main_categories)
         count = 0
-
         while de:
             parent_cat = de.popleft()
             sub_cats = self.get_sub_categories(parent_cat, save_db=save_db)
+            
             if len(sub_cats) == 0 and save_db:
                 parent_cat.is_leaf_cat = True
                 db.session.commit()
-                self.get_all_products_from_category(parent_cat,save_db)
+                # self.get_all_products_from_category(parent_cat,save_db)
 
             # print(sub_cats)
             de.extend(sub_cats)
@@ -248,8 +273,27 @@ class WebScrapper():
             if count % 100 == 0:
                 print(count, 'times')
 
+
+
+    proxy_pool = None
+
     def scrape_tiki_website(self, save_db=False):
+        proxies = self.get_proxies()
+        self.proxy_pool = cycle(proxies)
         main_category = self.get_main_categories(save_db)
-        self.get_all_categories(main_category, save_db)
+        self.get_all_categories(main_category,save_db)
+
+    session = flask_scoped_session(db.session)
+    def get_all_product_from_tiki(self, save_db=False):
+        proxies = self.get_proxies()
+        self.proxy_pool = cycle(proxies)
+        leaf_categories = category.Category.query.filter_by(is_leaf_cat=False,is_scraped=False).all()
+        pool = ThreadPool(5)
+        pool.starmap(self.get_all_products_from_category,zip(leaf_categories,[save_db] * len(leaf_categories)))
+        pool.close()
+        pool.join()
+        
+
+
 
 
