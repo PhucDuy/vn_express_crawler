@@ -8,7 +8,7 @@
     <div class="row h-100 justify-content-center align-items-center">
         <div class="col-md-12">
             <h1 class="display-4 text-center" style="color:blue">TIKI Scraper</h1>
-            <form class="row" method="POST" action="/products">
+            <form class="row" method="POST" action="/load_data">
                 {{ form.hidden_tag() }} {{ form.csrf_token }} {{ form.url(class_="mr-sm-1 col-sm-9 text-center form-control") }}
                 <input class="col-sm-2 text-center btn btn-outline-success" type="submit" value="Scrape it!">
             </form>
