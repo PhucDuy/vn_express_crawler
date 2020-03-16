@@ -13,6 +13,7 @@ from itertools import cycle
 
 
 from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy_session import flask_scoped_session
@@ -38,7 +39,7 @@ class WebScrapper():
 
 
 
-    def get_url(self, url, delay = 1):
+    def get_url(self, url, delay = 1.0):
         print("GET URL: "+url)
         time.sleep(delay)
         proxy = "http://"+ next(self.proxy_pool)
@@ -288,7 +289,7 @@ class WebScrapper():
         proxies = self.get_proxies()
         self.proxy_pool = cycle(proxies)
         leaf_categories = category.Category.query.filter_by(is_leaf_cat=False,is_scraped=False).all()
-        pool = ThreadPool(5)
+        pool = ThreadPool(10)
         pool.starmap(self.get_all_products_from_category,zip(leaf_categories,[save_db] * len(leaf_categories)))        
 
 

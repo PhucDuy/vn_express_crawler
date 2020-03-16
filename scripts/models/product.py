@@ -24,6 +24,6 @@ class Product(db.Model):
                                 lazy='subquery',backref=db.backref('products', lazy=True))
 
     def __repr__(self):
-        return "ID: {}, Name: {}, URL: {}, Parent_id: {}".format(self.id, self.name, self.url, self.parent_id)
+        return f"{self.title}"
 
 

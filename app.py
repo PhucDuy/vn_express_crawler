@@ -8,17 +8,27 @@ from wtforms.validators import DataRequired
 import datetime,time,requests
 import click
 from flask.cli import with_appcontext
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'a_secret_key. You may change it later'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tiki.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['FLASK_ADMIN_SWATCH'] = 'United'
+admin = Admin(app, name='Tiki Scraper', template_mode='bootstrap3')
+
 db = SQLAlchemy(app)
 
-
-
+from scripts.models.category import Category
+from scripts.models.product import Product,Photo
 from scripts import web_scraper as web_scrapper
+
+admin.add_view(ModelView(Category,db.session))
+admin.add_view(ModelView(Product,db.session))
+admin.add_view(ModelView(Photo,db.session))
+
 
 class UrlForm(FlaskForm):
     url = StringField('url', validators=[DataRequired()], render_kw={
@@ -36,6 +46,7 @@ def home():
 def get_proxies():
     click.echo("get_proxies")
     web_scrapper.WebScrapper().get_proxies()
+
 @app.cli.command("init_db")
 def init_db():
     click.echo("init_db")
@@ -54,6 +65,9 @@ def load_from_tiki():
     db.session.commit()
     web_scrapper.WebScrapper().scrape_tiki_website(app,save_db=True)
 
+@app.cli.command("say_hi")
+def say_hi():
+    click.echo("say_hi")
 
 @app.route('/products', methods=('POST', 'GET'))
 def product():
