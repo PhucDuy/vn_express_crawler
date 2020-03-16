@@ -1,10 +1,13 @@
 from app import db
+from flask_admin.contrib.sqla import ModelView
 
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(255), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey(
         'product.id'), nullable=False)
+    def __repr__(self):
+        return f"{self.url}"
 
 
 products_categories = db.Table('products_categories',
@@ -26,4 +29,18 @@ class Product(db.Model):
     def __repr__(self):
         return f"{self.title}"
 
+class PhotoView(ModelView):
+    can_delete = False  # disable model deletion
+    page_size = 50  # the number of entries to display on the list view
+    can_view_details = True
+    can_export = True
+    column_searchable_list = ['url']
 
+class ProductView(ModelView):
+    can_delete = False  # disable model deletion
+    page_size = 50  # the number of entries to display on the list view
+    can_view_details = True
+    column_exclude_list = ['seller_id', 'product_id']
+    column_searchable_list = ['title','price', 'url']
+    column_filters = ['title','price']
+    can_export = True

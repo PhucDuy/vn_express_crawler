@@ -21,13 +21,13 @@ admin = Admin(app, name='Tiki Scraper', template_mode='bootstrap3')
 
 db = SQLAlchemy(app)
 
-from scripts.models.category import Category
-from scripts.models.product import Product,Photo
+from scripts.models.category import Category,CategoryView
+from scripts.models.product import Product,Photo,ProductView,PhotoView
 from scripts import web_scraper as web_scrapper
 
-admin.add_view(ModelView(Category,db.session))
-admin.add_view(ModelView(Product,db.session))
-admin.add_view(ModelView(Photo,db.session))
+admin.add_view(CategoryView(Category,db.session))
+admin.add_view(ProductView(Product,db.session))
+admin.add_view(PhotoView(Photo,db.session))
 
 
 class UrlForm(FlaskForm):
